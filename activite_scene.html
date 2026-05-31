@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Musique de chambre — Lucius Arkmann</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#07070A;--dark:#111116;--stone:#1C1C22;
+  --warm:#F2EDE6;--muted:#8A857C;
+}
+body{background:var(--black);color:var(--warm);font-family:'Barlow',sans-serif;font-size:15px;line-height:1.7;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");opacity:0.035;pointer-events:none;z-index:999}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:24px 48px;background:linear-gradient(to bottom,rgba(7,7,10,0.95),transparent)}
+.nav-back{font-family:'Barlow',sans-serif;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;text-decoration:none;display:flex;align-items:center;gap:10px;transition:color .3s}
+.nav-back:hover{color:var(--warm)}
+.nav-back::before{content:'←'}
+.nav-logo{font-family:'Barlow',sans-serif;font-weight:400;font-size:15px;letter-spacing:0.18em;text-transform:uppercase;color:var(--warm);text-decoration:none}
+.hero{min-height:52vh;display:flex;flex-direction:column;justify-content:flex-end;padding:120px 48px 60px;border-bottom:1px solid #1E1E26}
+.hero-tag{font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:#A8A49E;margin-bottom:16px}
+h1{font-family:'Barlow',sans-serif;font-weight:400;font-size:clamp(42px,6vw,80px);line-height:1;letter-spacing:-.02em;color:var(--warm);margin-bottom:20px}
+.hero-sub{font-size:13px;color:#8A857C;letter-spacing:.04em}
+.content{max-width:700px;padding:72px 48px;margin:0 auto}
+.content p{font-size:22px;line-height:1.9;color:#8A857C;margin-bottom:24px}
+.content p strong{color:var(--warm);font-weight:500}
+.content p em{color:#A8A49E}
+.tags{display:flex;flex-wrap:wrap;gap:10px;margin:40px 0 0}
+.tag{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#6B6560;border:1px solid #2A2A35;padding:6px 14px}
+.divider{width:48px;height:1px;background:#3A3A42;margin:48px 0}
+.contact-cta{display:inline-flex;align-items:center;gap:12px;border:1px solid #2A2A35;padding:16px 32px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#A8A49E;text-decoration:none;transition:border-color .3s,color .3s;margin-top:48px}
+.contact-cta:hover{border-color:#A8A49E;color:var(--warm)}
+
+  .media-section { margin-bottom: 0; }
+  .media-sub-title {
+    font-size: 9px; letter-spacing: .25em; text-transform: uppercase;
+    color: #6B6560; margin-bottom: 20px;
+  }
+  .media-links { display: flex; flex-direction: column; gap: 12px; }
+  .media-link {
+    display: flex; align-items: center; gap: 16px;
+    border: 1px solid #2A2A35; padding: 14px 20px;
+    text-decoration: none; transition: border-color .3s;
+  }
+  .media-link:hover { border-color: #A8A49E; }
+  .media-icon { font-size: 14px; color: #A8A49E; width: 20px; text-align: center; flex-shrink: 0; }
+  .media-link-text { display: flex; flex-direction: column; gap: 2px; }
+  .media-link-label { font-size: 11px; color: #F2EDE6; letter-spacing: .05em; }
+  .media-link-desc  { font-size: 9px;  color: #4A4A54; font-style: italic; }
+
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 18px;
+    border: 1px solid #2A2A35; padding: 18px 28px;
+    text-decoration: none; transition: border-color .3s, background .3s;
+    width: 100%;
+  }
+  .download-btn:hover { border-color: #A8A49E; background: #111116; }
+  .dl-icon { font-size: 20px; color: #A8A49E; flex-shrink: 0; }
+  .dl-text { display: flex; flex-direction: column; gap: 3px; }
+  .dl-label { font-size: 12px; color: #F2EDE6; font-weight: 500; letter-spacing: .05em; }
+  .dl-sub   { font-size: 9px;  color: #6B6560; letter-spacing: .15em; text-transform: uppercase; }
+
+@media(max-width:768px){nav{padding:20px 24px}.hero{padding:100px 24px 40px}.content{padding:48px 24px}}
+
+  .lang-toggle {
+    background: transparent;
+    border: 1px solid #2A2A35;
+    color: var(--muted);
+    font-family: 'Barlow', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .lang-toggle:hover { color: var(--warm); border-color: var(--gold); }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-back" href="index.html" data-i18n="nav.back">Retour</a>
+  <div style="display:flex;align-items:center;gap:28px;"><a href="agenda.html" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A857C;text-decoration:none;transition:color .3s;" onmouseover="this.style.color='#F2EDE6'" onmouseout="this.style.color='#8A857C'">Agenda</a><a class="nav-logo" href="index.html">L. Arkmann</a><button id="lang-toggle" class="lang-toggle" onclick="__toggleLang()">EN</button>
+</div>
+</nav>
+<div class="hero">
+  <div class="hero-tag" data-i18n="act.tag">Activité</div>
+  <h1 data-i18n="scene.title">Musique de chambre</h1>
+  <div class="hero-sub" data-i18n="scene.sub">Jouer à plusieurs</div>
+</div>
+<div class="content">
+  
+        
+  
+  <p><span data-i18n="scene.p1">La musique de chambre occupe une place importante dans mon activité, avec une grande diversité de répertoire.</span></p>
+        <p><span data-i18n="scene.p2">Je joue dans des formations variées, du duo au quintette, avec mes musiciens d'ensemble et de musique de chambre. L'arrangement y devient un outil de création&nbsp;: un moyen d'adapter à chaque formation le répertoire que l'on veut aborder.</span></p>
+        <p><span data-i18n="scene.p3">Ouvert aux collaborations avec d'autres ensembles, pour des projets de concert comme de création.</span></p>
+  
+  
+        
+  
+  <div class="divider"></div>
+
+  <div class="media-section">
+    <div class="media-sub-title" data-i18n="media.sub">Vidéos & Écouter</div>
+    <div class="media-links">
+      <a class="media-link" href="https://www.youtube.com/@LuciusArkmann-zo7vw" target="_blank">
+        <span class="media-icon">▶</span>
+        <span class="media-link-text">
+          <span class="media-link-label">YouTube</span>
+          <span class="media-link-desc" data-i18n="media.yt.desc">Voir les vidéos →</span>
+        </span>
+      </a>
+      <a class="media-link" href="https://soundcloud.com/lucius-arkmann" target="_blank">
+        <span class="media-icon">◎</span>
+        <span class="media-link-text">
+          <span class="media-link-label">SoundCloud</span>
+          <span class="media-link-desc" data-i18n="media.sc.desc">Écouter →</span>
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <a class="download-btn" href="#" download>
+    <span class="dl-icon">↓</span>
+    <span class="dl-text">
+      <span class="dl-label" data-i18n="dl.label">Télécharger le catalogue</span>
+      <span class="dl-sub" data-i18n="dl.sub">Répertoire complet — PDF</span>
+    </span>
+  </a>
+
+  <div class="tags">
+    <span class="tag">Duo</span><span class="tag">Ensemble</span><span class="tag">Arrangement</span><span class="tag">Création</span>
+  </div>
+  <a class="contact-cta" href="index.html#contact" data-i18n="cta">Écrivez-moi →</a>
+</div>
+
+<script>
+(function(){
+  var T = {
+    fr: {
+      /* NAV */
+      'nav.about':       'À propos',
+      'nav.activities':  'Activités',
+      'nav.listen':      'Écouter',
+      'nav.press':       'Presse',
+      'nav.contact':     'Contact',
+      'nav.back':        'Retour',
+      /* HERO */
+      'hero.subtitle':   'Compositeur&nbsp;·&nbsp;Interprète&nbsp;·&nbsp;Artiste',
+      /* ABOUT */
+      'about.label':     'À propos',
+      'about.title':     'Une activité<br><em>plurielle</em>',
+      'about.p1':        '<strong>Lucius Arkmann</strong> est guitariste, compositeur et concertiste, formé au Conservatoire national supérieur de musique et de danse de Paris. Ces trois pratiques tiennent chez lui une place égale et se nourrissent mutuellement.',
+      'about.p2':        'Son approche naît d\'un jeu instinctif, porté par la connaissance et l\'étude — sans jamais s\'y réduire. L\'une et l\'autre s\'y répondent, au service d\'une musique vivante.',
+      'about.cta':       'Écrivez-moi →',
+      /* ACTIVITIES */
+      'act.label':       'Activités',
+      'act.comp.name':   'Composition<br>& Arrangement',
+      'act.comp.desc':   'Écriture pour ensembles, solistes, dispositifs électroniques et orchestre. Une grande variété d\'esthétiques, de l\'ancien au contemporain.',
+      'act.interp.name': 'Concertiste',
+      'act.interp.desc': 'Un répertoire qui couvre cinq siècles et une improvisation par style nourrie de la composition. Le jeu comme prolongement de la pensée compositionnelle.',
+      'act.chamber.name':'Musique<br>de chambre',
+      'act.chamber.desc':'Une grande diversité de répertoire, avec mes musiciens d\'ensemble et de musique de chambre. L\'arrangement comme outil de création.',
+      'act.install.name':'Installations<br>& Art visuel',
+      'act.install.desc':'Des œuvres audiovisuelles où musique, image et durée dialoguent. Un travail mené en collaboration, à la croisée du son et du visuel.',
+      'act.teach.name':  'Enseignement<br>& Transmission',
+      'act.teach.desc':  'Cours et ateliers. Une approche globale de la guitare, ouverte à toutes les esthétiques, pour aborder à terme tous les répertoires.',
+      'act.quote':       '« Un propos<br><em>derrière<br>chaque note.</em> »',
+      /* MEDIA */
+      'media.label':     'Écouter & voir',
+      'media.title':     'Extraits',
+      'media.audio':     'Démos audio',
+      'media.video':     'Vidéos',
+      'media.yt.desc':   'Voir les vidéos →',
+      'media.sc.desc':   'Écouter →',
+      'media.sub':       'Vidéos & Écouter',
+      /* PRESS */
+      'press.label':     'Presse & documents',
+      'press.title':     'Dossier<br>de presse',
+      'press.bio':       'Biographie, photos haute définition, liste des œuvres et collaborations. À télécharger librement pour toute demande de programmation ou de diffusion.',
+      'press.download':  '↓ &nbsp; Télécharger le press-kit (PDF)',
+      'press.photo':     'Photo presse',
+      'press.biolabel':  'Biographie courte',
+      /* CONTACT */
+      'contact.label':   'Contact',
+      'contact.title':   'Un message,<br><em>une idée</em>',
+      'contact.sub':     'Compositeur, interprète, enseignant, collaborateur — écrivez-moi.',
+      'contact.obj0':    'Objet de la demande',
+      'contact.obj1':    'Commande / Composition',
+      'contact.obj2':    'Collaboration artistique',
+      'contact.obj3':    'Booking / Concert',
+      'contact.obj4':    'Cours particulier',
+      'contact.obj5':    'Autre',
+      'contact.submit':  'Envoyer le message →',
+      /* FOOTER */
+      'footer.copy':     '© 2025 Tous droits réservés',
+      /* ACTIVITY PAGES — hero */
+      'act.tag':         'Activité',
+      'dl.label':        'Télécharger le catalogue',
+      'dl.sub':          'Répertoire complet — PDF',
+      'cta':             'Écrivez-moi →',
+      /* Composition */
+      'comp.title':      'Composition & Arrangement',
+      'comp.sub':        'Une multitude d\'esthétiques, du soliste à l\'orchestre en passant par la musique de chambre',
+      'comp.p1':         'Ma démarche de composition repose sur plusieurs aspects. Côté création, elle s\'appuie sur une multitude d\'esthétiques, inspirées de plusieurs périodes de la musique : le baroque européen, le romantisme allemand, le XX<sup>e</sup> siècle français, la musique contemporaine américaine et européenne, ainsi que la musique électronique des années 2000.',
+      'comp.p2':         'J\'écris pour le soliste comme pour l\'ensemble ou l\'orchestre, avec ou sans électronique. Chaque projet est unique et appelle sa propre esthétique.',
+      'comp.p3':         'L\'arrangement est l\'occasion de travailler de nouveaux répertoires dans un cadre donné, et c\'est un véritable outil de progression et de réappropriation. Il ouvre tout un éventail de possibilités : de l\'adaptation à une formation différente jusqu\'à la réinvention complète de l\'œuvre.',
+      'comp.p4':         'Cette écriture s\'est forgée au Conservatoire national supérieur de musique de Paris, auprès de Fabien Waksman en écriture, Thierry Escaich en fugue et sonate, Thibault Perrine en contrepoint, Jean-Pascal Chaigne en écriture des XX<sup>e</sup>–XXI<sup>e</sup> siècles, et Marc-André Dalbavie en orchestration.',
+      /* Interpretation */
+      'interp.title':    'Concertiste',
+      'interp.sub':      'Cinq siècles de répertoire, de la Renaissance au contemporain',
+      'interp.p1':       'La guitare est mon point de départ, et mon jeu s\'est nourri de l\'écriture et de l\'improvisation. En soliste, j\'aime construire des programmes autour de thématiques variées — par le sujet comme par l\'esthétique. Je joue un répertoire, original ou arrangé, qui s\'étend de 1500 à aujourd\'hui : de mes arrangements de pages baroques ou de Schubert jusqu\'à la musique contemporaine, en continuant d\'explorer de nouveaux répertoires.',
+      'interp.p2':       'Cette pratique est indissociable de mon travail de composition : une improvisation par style, et le jeu comme prolongement de la pensée compositionnelle.',
+      'interp.p3':       'De cette recherche est né <em>Godspeed</em>, un récital qui réunit en une seule performance la guitare, l\'improvisation et la vidéoprojection.',
+      'interp.p4':       'Je me produis en récital solo comme en formation, en salle de concert, en festival ou dans des espaces plus expérimentaux.',
+      /* Chamber */
+      'scene.title':     'Musique de chambre',
+      'scene.sub':       'Jouer à plusieurs',
+      'scene.p1':        'La musique de chambre occupe une place importante dans mon activité, avec une grande diversité de répertoire.',
+      'scene.p2':        'Je joue dans des formations variées, du duo au quintette, avec mes musiciens d\'ensemble et de musique de chambre. L\'arrangement y devient un outil de création : un moyen d\'adapter à chaque formation le répertoire que l\'on veut aborder.',
+      'scene.p3':        'Ouvert aux collaborations avec d\'autres ensembles, pour des projets de concert comme de création.',
+      /* Installations */
+      'install.title':   'Installations & Art visuel',
+      'install.sub':     'Le son, de concert avec le visuel',
+      'install.p1':      'Je réalise des œuvres audiovisuelles où musique, image et durée dialoguent. Les idées visuelles — la forme qu\'on donne à la musique — se matérialisent par des installations, surtout par la vidéoprojection et par la création sonore associée à la vidéo, au format digital.',
+      'install.p2':      'Ce travail se mène en collaboration, à la croisée du son et du visuel. Pour l\'aspect sonore, il peut prendre plusieurs formes : de la musique, mais aussi une approche plus bruitiste — recréer des sons, en enregistrer, travailler la matière sonore elle-même. C\'est une démarche libre, qui puise aussi bien dans la musique que dans le seul travail du son.',
+      'install.p3':      'Pour développer ce travail avec l\'art visuel et plastique, j\'ai fondé avec Nicolas Audepin le Jonasfried Studio.',
+      /* Teaching */
+      'teach.title':     'Enseignement & Transmission',
+      'teach.sub':       'Transmettre une façon de penser',
+      'teach.p1':        'Mon enseignement repose sur la <strong>bienveillance</strong> et sur l\'ouverture à toutes les esthétiques. Je transmets une approche globale de la guitare et de la musique, qui permet à chacun, à terme, d\'aborder à peu près n\'importe quel répertoire, du classique aux musiques actuelles.',
+      'teach.p2':        'Ce qui m\'anime, c\'est d\'aider chacun à développer une relation <em>personnelle</em> avec la musique : une façon de l\'écouter, de la questionner, de la construire.',
+      'teach.p3':        'J\'enseigne au conservatoire d\'Eaubonne, dans le Val-d\'Oise, où je suis professeur de la classe de guitare et donne des cours de musiques actuelles amplifiées (MAA). J\'y occupe aussi un poste d\'arrangeur du conservatoire.',
+      'teach.p4':        'Je donne par ailleurs des cours particuliers — instrument, composition, analyse, harmonie — et des ateliers de création, en m\'adaptant au niveau et aux objectifs de chacun, du débutant curieux à l\'étudiant en cursus professionnel.',
+      'teach.p5':        'Pour toute demande, utilisez le formulaire de contact de la page principale.',
+    },
+    en: {
+      /* NAV */
+      'nav.about':       'About',
+      'nav.activities':  'Activities',
+      'nav.listen':      'Listen',
+      'nav.press':       'Press',
+      'nav.contact':     'Contact',
+      'nav.back':        'Back',
+      /* HERO */
+      'hero.subtitle':   'Composer&nbsp;·&nbsp;Performer&nbsp;·&nbsp;Artist',
+      /* ABOUT */
+      'about.label':     'About',
+      'about.title':     'A multifaceted<br><em>practice</em>',
+      'about.p1':        '<strong>Lucius Arkmann</strong> is a guitarist, composer and concert performer, trained at the Conservatoire national supérieur de musique et de danse de Paris. These three practices hold equal place in his work and feed one another.',
+      'about.p2':        'His approach grows from instinctive playing, carried by knowledge and study — without ever being reduced to it. The two answer each other, in service of living music.',
+      'about.cta':       'Write to me →',
+      /* ACTIVITIES */
+      'act.label':       'Activities',
+      'act.comp.name':   'Composition<br>& Arrangement',
+      'act.comp.desc':   'Writing for ensembles, soloists, electronic devices and orchestra. A wide range of aesthetics, from early to contemporary music.',
+      'act.interp.name': 'Concert Performer',
+      'act.interp.desc': 'A repertoire spanning five centuries and style-based improvisation nourished by composition. Playing as an extension of compositional thinking.',
+      'act.chamber.name':'Chamber<br>Music',
+      'act.chamber.desc':'A wide diversity of repertoire, with my ensemble and chamber musicians. Arrangement as a creative tool.',
+      'act.install.name':'Installations<br>& Visual Art',
+      'act.install.desc':'Audiovisual works where music, image and duration dialogue. A collaborative practice, at the crossroads of sound and the visual.',
+      'act.teach.name':  'Teaching<br>& Transmission',
+      'act.teach.desc':  'Courses and workshops. A comprehensive approach to guitar, open to all aesthetics, aimed at eventually covering all repertoires.',
+      'act.quote':       '« A statement<br><em>behind<br>every note.</em> »',
+      /* MEDIA */
+      'media.label':     'Listen & watch',
+      'media.title':     'Excerpts',
+      'media.audio':     'Audio demos',
+      'media.video':     'Videos',
+      'media.yt.desc':   'Watch videos →',
+      'media.sc.desc':   'Listen →',
+      'media.sub':       'Videos & Listen',
+      /* PRESS */
+      'press.label':     'Press & documents',
+      'press.title':     'Press<br>kit',
+      'press.bio':       'Biography, high-definition photos, list of works and collaborations. Free to download for any programming or broadcast request.',
+      'press.download':  '↓ &nbsp; Download press kit (PDF)',
+      'press.photo':     'Press photo',
+      'press.biolabel':  'Short biography',
+      /* CONTACT */
+      'contact.label':   'Contact',
+      'contact.title':   'A message,<br><em>an idea</em>',
+      'contact.sub':     'Composer, performer, teacher, collaborator — write to me.',
+      'contact.obj0':    'Subject',
+      'contact.obj1':    'Commission / Composition',
+      'contact.obj2':    'Artistic collaboration',
+      'contact.obj3':    'Booking / Concert',
+      'contact.obj4':    'Private lesson',
+      'contact.obj5':    'Other',
+      'contact.submit':  'Send message →',
+      /* FOOTER */
+      'footer.copy':     '© 2025 All rights reserved',
+      /* ACTIVITY PAGES */
+      'act.tag':         'Activity',
+      'dl.label':        'Download catalogue',
+      'dl.sub':          'Full repertoire — PDF',
+      'cta':             'Write to me →',
+      /* Composition */
+      'comp.title':      'Composition & Arrangement',
+      'comp.sub':        'A multitude of aesthetics, from solo to orchestra and chamber music',
+      'comp.p1':         'My compositional approach rests on several pillars. On the creative side, it draws from a multitude of aesthetics inspired by different periods of music history: European baroque, German romanticism, the French 20th century, American and European contemporary music, and electronic music from the 2000s.',
+      'comp.p2':         'I write for soloists, ensembles and orchestra alike, with or without electronics. Each project is unique and calls for its own aesthetic.',
+      'comp.p3':         'Arrangement is an opportunity to engage with new repertoires within a given context — a genuine tool for growth and reappropriation. It opens a wide range of possibilities: from adapting a work to a different instrumentation to completely reinventing it.',
+      'comp.p4':         'This craft was forged at the Conservatoire national supérieur de musique de Paris, with Fabien Waksman in writing, Thierry Escaich in fugue and sonata, Thibault Perrine in counterpoint, Jean-Pascal Chaigne in 20th–21st century writing, and Marc-André Dalbavie in orchestration.',
+      /* Interpretation */
+      'interp.title':    'Concert Performer',
+      'interp.sub':      'Five centuries of repertoire, from the Renaissance to the contemporary',
+      'interp.p1':       'Guitar is my starting point, and my playing has been shaped by composition and improvisation. As a soloist, I enjoy building programmes around varied themes — both in subject and aesthetic. I play a repertoire, original or arranged, spanning from 1500 to today: from my arrangements of baroque pages or Schubert to contemporary music, continually exploring new territory.',
+      'interp.p2':       'This practice is inseparable from my compositional work: style-based improvisation, and playing as an extension of compositional thinking.',
+      'interp.p3':       'From this research grew <em>Godspeed</em>, a recital that brings together guitar, improvisation and video projection in a single performance.',
+      'interp.p4':       'I perform in solo recitals and with ensembles, in concert halls, festivals and more experimental spaces.',
+      /* Chamber */
+      'scene.title':     'Chamber Music',
+      'scene.sub':       'Playing together',
+      'scene.p1':        'Chamber music holds an important place in my work, with a wide diversity of repertoire.',
+      'scene.p2':        'I play in varied formations, from duo to quintet, with my ensemble and chamber musicians. Arrangement becomes a creative tool: a way to adapt repertoire to each formation.',
+      'scene.p3':        'Open to collaborations with other ensembles, for concert and creation projects.',
+      /* Installations */
+      'install.title':   'Installations & Visual Art',
+      'install.sub':     'Sound in dialogue with the visual',
+      'install.p1':      'I create audiovisual works where music, image and duration dialogue. The visual ideas — the form given to music — take shape through installations, primarily video projection and sound creation associated with video, in digital format.',
+      'install.p2':      'This work is collaborative, at the crossroads of sound and the visual. On the sonic side, it can take several forms: music, but also a more noise-based approach — recreating sounds, recording them, working with raw sonic material. It is an open practice, drawing as freely from music as from pure sound work.',
+      'install.p3':      'To develop this work with visual and plastic art, I co-founded Jonasfried Studio with Nicolas Audepin.',
+      /* Teaching */
+      'teach.title':     'Teaching & Transmission',
+      'teach.sub':       'Transmitting a way of thinking',
+      'teach.p1':        'My teaching rests on <strong>kindness</strong> and openness to all aesthetics. I transmit a comprehensive approach to guitar and music, one that allows each student, in time, to tackle virtually any repertoire, from classical to contemporary popular music.',
+      'teach.p2':        'What drives me is helping each person develop a <em>personal</em> relationship with music: a way of listening to it, questioning it, building it.',
+      'teach.p3':        'I teach at the conservatoire d\'Eaubonne, in Val-d\'Oise, where I am professor of the guitar class and teach amplified contemporary music (MAA). I also hold a position as arranger at the conservatoire.',
+      'teach.p4':        'I also give private lessons — instrument, composition, analysis, harmony — and creative workshops, adapting to each student\'s level and goals, from the curious beginner to the student in professional training.',
+      'teach.p5':        'For any enquiry, please use the contact form on the main page.',
+    }
+  };
+
+  function applyLang(lang) {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      var val = T[lang] && T[lang][key];
+      if (val !== undefined) el.innerHTML = val;
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-ph');
+      var val = T[lang] && T[lang][key];
+      if (val !== undefined) el.placeholder = val;
+    });
+    var btn = document.getElementById('lang-toggle');
+    if (btn) btn.textContent = lang === 'fr' ? 'EN' : 'FR';
+    localStorage.setItem('lang', lang);
+  }
+
+  window.__toggleLang = function() {
+    var cur = localStorage.getItem('lang') || 'fr';
+    applyLang(cur === 'fr' ? 'en' : 'fr');
+  };
+
+  var saved = localStorage.getItem('lang') || 'fr';
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ applyLang(saved); });
+  } else {
+    applyLang(saved);
+  }
+})();
+</script>
+
+</body>
+</html>
