@@ -82,8 +82,8 @@
   }
 
   .nav-links a {
-    font-size: 10px;
-    letter-spacing: 0.2em;
+    font-size: 20px;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
     color: var(--muted);
     text-decoration: none;
@@ -472,7 +472,7 @@
   #contact h2 { margin-bottom: 16px; }
 
   .contact-sub {
-    font-size: 11px;
+    font-size: 16px;
     color: var(--muted);
     margin-bottom: 48px;
     
@@ -497,8 +497,8 @@
     border: 1px solid #2A2A35;
     color: var(--warm);
     font-family: 'Barlow', sans-serif;
-    font-size: 11px;
-    padding: 14px 18px;
+    font-size: 15px;
+    padding: 16px 20px;
     outline: none;
     transition: border-color 0.3s;
   }
@@ -516,10 +516,10 @@
     border: 1px solid var(--gold-dim);
     color: var(--gold);
     font-family: 'Barlow', sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.25em;
+    font-size: 14px;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    padding: 16px 40px;
+    padding: 18px 44px;
     cursor: pointer;
     transition: background 0.3s, color 0.3s;
     align-self: flex-start;
@@ -601,6 +601,8 @@
     #about { grid-template-columns: 1fr; padding: 60px 24px; gap: 40px; }
     .about-photo { aspect-ratio: 4/3; max-height: 300px; }
     .activities-grid { grid-template-columns: 1fr; }
+    .activity-name { font-size: 26px; }
+    .activity-desc { font-size: 15px; color: #C8C3BC; }
     #media { padding: 60px 24px; }
     .media-grid { grid-template-columns: 1fr; }
     #press { grid-template-columns: 1fr; padding: 60px 24px; gap: 40px; }
@@ -618,10 +620,10 @@
     border: 1px solid #2A2A35;
     color: var(--muted);
     font-family: 'Barlow', sans-serif;
-    font-size: 9px;
-    letter-spacing: 0.2em;
+    font-size: 18px;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    padding: 5px 10px;
+    padding: 7px 14px;
     cursor: pointer;
     transition: color 0.3s, border-color 0.3s;
   }
@@ -794,7 +796,7 @@
       <input type="text" name="name" id="cf-name" placeholder="Prénom Nom" required>
       <input type="email" name="email" id="cf-email" placeholder="votre@email.com" required>
     </div>
-    <select name="objet" id="cf-subject" style="background:#1C1C22; border:1px solid #2A2A35; color:#8A857C; font-family:'Space Mono',monospace; font-size:11px; padding:14px 18px; outline:none;">
+    <select name="objet" id="cf-subject" style="background:#1C1C22; border:1px solid #2A2A35; color:#8A857C;">
       <option data-i18n="contact.obj0">Objet de la demande</option>
       <option data-i18n="contact.obj1">Commande / Composition</option>
       <option data-i18n="contact.obj2">Collaboration artistique</option>
@@ -804,7 +806,7 @@
     </select>
     <textarea name="message" id="cf-msg" placeholder="Votre message…" required></textarea>
     <button type="submit" class="contact-submit" data-i18n="contact.submit">Envoyer le message →</button>
-    <div id="cf-status" style="font-family:'Space Mono',monospace; font-size:11px; margin-top:14px; min-height:18px; color:#8A857C;"></div>
+    <div id="cf-status" style="font-family:'Barlow',sans-serif; font-size:14px; margin-top:14px; min-height:18px; color:#8A857C;"></div>
   </form>
 </section>
 

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda — Lucius Arkmann</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--black:#07070A;--dark:#111116;--stone:#1C1C22;--warm:#F2EDE6;--muted:#8A857C;--gold:#B0ABA4;--gold-dim:#6B6560;}
+body{background:var(--black);color:var(--warm);font-family:'Barlow',sans-serif;font-size:15px;line-height:1.7;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");opacity:0.035;pointer-events:none;z-index:999;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:24px 48px;background:linear-gradient(to bottom,rgba(7,7,10,0.95),transparent)}
+.nav-back{font-family:'Barlow',sans-serif;font-size:20px;letter-spacing:0.15em;text-transform:uppercase;color:#8A857C;text-decoration:none;display:flex;align-items:center;gap:10px;transition:color .3s}
+.nav-back:hover{color:var(--warm)}
+.nav-back::before{content:'←'}
+.lang-toggle{background:transparent;border:1px solid #2A2A35;color:var(--muted);font-family:'Barlow',sans-serif;font-size:18px;letter-spacing:0.15em;text-transform:uppercase;padding:7px 14px;cursor:pointer;transition:color .3s,border-color .3s;}
+.lang-toggle:hover{color:var(--warm);border-color:var(--gold);}
+.hero{min-height:40vh;display:flex;flex-direction:column;justify-content:flex-end;padding:120px 48px 60px;border-bottom:1px solid #1E1E26}
+.hero-tag{font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:#A8A49E;margin-bottom:16px}
+h1{font-family:'Barlow',sans-serif;font-weight:400;font-size:clamp(42px,6vw,80px);line-height:1;letter-spacing:-.02em;color:var(--warm);margin-bottom:20px}
+.hero-sub{font-size:14px;color:#8A857C;letter-spacing:.04em}
+
+/* ── Events list ── */
+.events{max-width:860px;padding:72px 48px;margin:0 auto}
+.event-item{display:grid;grid-template-columns:120px 1fr auto;gap:32px;align-items:start;padding:36px 0;border-bottom:1px solid #1A1A20;}
+.event-item:first-child{border-top:1px solid #1A1A20;}
+.event-date{display:flex;flex-direction:column;gap:4px;padding-top:4px;}
+.event-day{font-size:clamp(32px,4vw,48px);font-weight:300;color:var(--warm);line-height:1;}
+.event-month{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);}
+.event-year{font-size:10px;letter-spacing:.15em;color:var(--gold-dim);}
+.event-info{}
+.event-title{font-size:clamp(18px,2.5vw,26px);font-weight:400;color:var(--warm);margin-bottom:8px;line-height:1.2;}
+.event-detail{font-size:13px;color:var(--muted);margin-bottom:4px;}
+.event-tag{display:inline-block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-dim);border:1px solid #2A2A35;padding:4px 10px;margin-top:8px;}
+.event-link{align-self:center;}
+.event-link a{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold-dim);padding-bottom:2px;transition:color .3s,border-color .3s;white-space:nowrap;}
+.event-link a:hover{color:var(--warm);border-color:var(--warm);}
+
+.empty-state{text-align:center;padding:80px 0;}
+.empty-state p{font-size:18px;color:var(--muted);line-height:2;margin-bottom:32px;}
+
+.contact-cta{display:inline-flex;align-items:center;gap:12px;border:1px solid #2A2A35;padding:16px 32px;font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:#A8A49E;text-decoration:none;transition:border-color .3s,color .3s;margin-top:48px;}
+.contact-cta:hover{border-color:#A8A49E;color:var(--warm)}
+
+@media(max-width:768px){
+  nav{padding:20px 24px}
+  .hero{padding:100px 24px 40px}
+  .events{padding:48px 24px}
+  .event-item{grid-template-columns:80px 1fr;gap:20px;}
+  .event-link{grid-column:2;}
+  .event-day{font-size:32px;}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-back" href="index.html" data-i18n="nav.back">Retour</a>
+  <button id="lang-toggle" class="lang-toggle" onclick="__toggleLang()">EN</button>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag" data-i18n="agenda.tag">Agenda</div>
+  <h1 data-i18n="agenda.title">Agenda</h1>
+  <div class="hero-sub" data-i18n="agenda.sub">Concerts, récitals & événements à venir</div>
+</div>
+
+<div class="events" id="events-container">
+  <!-- Les événements sont générés par le script ci-dessous.
+       Pour ajouter un événement, ajoutez un objet dans le tableau EVENTS. -->
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ÉVÉNEMENTS — modifiez ce tableau pour ajouter des dates
+//  Chaque événement :
+//    date   : "YYYY-MM-DD"
+//    fr     : { title, lieu, detail, tag, lien (optionnel) }
+//    en     : { title, lieu, detail, tag, lien (optionnel) }
+// ═══════════════════════════════════════════════════════
+var EVENTS = [
+  {
+    date: "2026-07-18",
+    fr: { title: "La Disparition des Dinosaures", lieu: "Grande salle du Crétacé, Paris", detail: "Récital solo — guitare & improvisation", tag: "Récital" },
+    en: { title: "The Disappearance of the Dinosaurs", lieu: "Grande salle du Crétacé, Paris", detail: "Solo recital — guitar & improvisation", tag: "Recital" }
+  },
+  {
+    date: "2026-09-05",
+    fr: { title: "L'Arrivée des Aliens", lieu: "Philharmonie de la Voie Lactée, Lyon", detail: "Création mondiale — ensemble de chambre & électronique", tag: "Création" },
+    en: { title: "The Arrival of the Aliens", lieu: "Philharmonie de la Voie Lactée, Lyon", detail: "World premiere — chamber ensemble & electronics", tag: "World premiere" }
+  },
+  {
+    date: "2026-12-25",
+    fr: { title: "La Résurrection du Saint-Empire Romain Germanique", lieu: "Cathédrale d'Aix-la-Chapelle", detail: "Concert de Noël — musique médiévale & contemporaine", tag: "Concert" },
+    en: { title: "The Resurrection of the Holy Roman Empire", lieu: "Aachen Cathedral", detail: "Christmas concert — medieval & contemporary music", tag: "Concert" }
+  }
+];
+// ═══════════════════════════════════════════════════════
+
+var MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+var MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function renderEvents(lang) {
+  var container = document.getElementById('events-container');
+  var now = new Date(); now.setHours(0,0,0,0);
+  var upcoming = EVENTS.filter(function(e){ return new Date(e.date) >= now; });
+  upcoming.sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+
+  if (upcoming.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p data-i18n="agenda.empty">'
+      + (lang==='fr' ? 'Aucun événement annoncé pour le moment.<br>Revenez bientôt.' : 'No upcoming events at the moment.<br>Check back soon.')
+      + '</p><a class="contact-cta" href="index.html#contact">'
+      + (lang==='fr' ? 'Écrivez-moi →' : 'Write to me →') + '</a></div>';
+    return;
+  }
+
+  var months = lang === 'fr' ? MONTHS_FR : MONTHS_EN;
+  var html = upcoming.map(function(e) {
+    var d = new Date(e.date);
+    var t = e[lang] || e.fr;
+    var linkHtml = t.lien ? '<div class="event-link"><a href="'+t.lien+'" target="_blank">'+(lang==='fr'?'Billetterie →':'Tickets →')+'</a></div>' : '<div class="event-link"></div>';
+    return '<div class="event-item">'
+      + '<div class="event-date"><div class="event-day">'+d.getDate()+'</div>'
+      + '<div class="event-month">'+months[d.getMonth()]+'</div>'
+      + '<div class="event-year">'+d.getFullYear()+'</div></div>'
+      + '<div class="event-info">'
+      + '<div class="event-title">'+t.title+'</div>'
+      + '<div class="event-detail">'+t.lieu+'</div>'
+      + '<div class="event-detail">'+t.detail+'</div>'
+      + '<span class="event-tag">'+t.tag+'</span>'
+      + '</div>'
+      + linkHtml
+      + '</div>';
+  }).join('');
+
+  html += '<a class="contact-cta" href="index.html#contact">'+(lang==='fr'?'Écrivez-moi →':'Write to me →')+'</a>';
+  container.innerHTML = html;
+}
+
+// ── i18n ──────────────────────────────────────────────
+var T = {
+  fr: { 'nav.back':'Retour', 'agenda.tag':'Agenda', 'agenda.title':'Agenda', 'agenda.sub':'Concerts, récitals & événements à venir' },
+  en: { 'nav.back':'Back',   'agenda.tag':'Agenda', 'agenda.title':'Agenda', 'agenda.sub':'Upcoming concerts, recitals & events' }
+};
+function applyLang(lang) {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var v = T[lang] && T[lang][el.getAttribute('data-i18n')];
+    if(v !== undefined) el.innerHTML = v;
+  });
+  var btn = document.getElementById('lang-toggle');
+  if(btn) btn.textContent = lang==='fr'?'EN':'FR';
+  localStorage.setItem('lang', lang);
+  renderEvents(lang);
+}
+window.__toggleLang = function(){ applyLang(localStorage.getItem('lang')==='fr'?'en':'fr'); };
+applyLang(localStorage.getItem('lang') || 'fr');
+</script>
+</body>
+</html>
