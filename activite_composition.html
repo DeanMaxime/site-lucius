@@ -112,6 +112,31 @@ h1{font-family:'Barlow',sans-serif;font-weight:400;font-size:clamp(42px,6vw,80px
     .content-aside-right img { max-height: 400px; object-fit: cover; object-position: top; }
     .mobile-inline-photo { display: block; width: 100%; border: 1px solid #1E1E26; margin-bottom: 32px; }
   }
+
+  @media(min-width:769px) and (max-width:1100px) {
+    .content-with-aside {
+      flex-direction: column;
+      padding: 60px 40px;
+    }
+    .content-aside-left {
+      position: static;
+      flex: none;
+      width: 100%;
+      order: -1;
+    }
+    .content-aside-right {
+      position: static;
+      flex: none;
+      width: 100%;
+      order: 99;
+    }
+    .content-aside-left img,
+    .content-aside-right img {
+      max-height: 360px;
+      object-fit: cover;
+      object-position: center;
+    }
+  }
 </style>
 </head>
 <body>
