@@ -260,8 +260,19 @@
   var RAIL = 34;          // x du rail vertical (gouttière gauche)
   var on = false;
   var els = {};           // éléments injectés
-  var io = null;          // IntersectionObserver
+  var io = null;          // IntersectionObserver (structure)
+  var conceptIO = null;   // IntersectionObserver (fils sémantiques)
   var rafPending = false;
+
+  /* ---- 0. Carte des concepts : terme du texte -> carte d'activité ----- */
+  var CONCEPTS = [
+    { from:"compositeur", root:"#about", card:"activite_composition.html",
+      word:"Composition",  label:"COMPOSITION" },
+    { from:"concertiste", root:"#about", card:"activite_interpretation.html",
+      word:"Concertiste",  label:"INTERPRÉTATION" },
+    { from:"guitariste",  root:"#about", card:"activite_enseignement.html",
+      word:"guitare",      label:"GUITARE" }
+  ];
 
   /* ---- 1. CSS (scopée beton) ---------------------------------------- */
   var CSS = `
@@ -319,9 +330,19 @@
   .bp-cartouche .k{ color:var(--bp); text-transform:uppercase; }
   .bp-cartouche .big{ font-size:12px; letter-spacing:.18em; text-transform:uppercase;
     justify-content:flex-start; color:var(--bp-ink); }
+  /* fils sémantiques : termes du texte reliés aux activités */
+  .bp-svg .cwire{ fill:none; stroke:var(--bp); stroke-width:1.3;
+    transition:stroke-dashoffset 1.2s cubic-bezier(.2,.7,.2,1); }
+  .bp-svg .cunder{ stroke:var(--bp); stroke-width:1.6;
+    transition:stroke-dashoffset .7s cubic-bezier(.2,.7,.2,1); }
+  .bp-svg .cdot{ fill:var(--bp); opacity:0; transition:opacity .4s .2s; }
+  .bp-svg .clbl{ fill:var(--bp-ink); font-family:'Space Mono',monospace;
+    font-size:9.5px; letter-spacing:.1em; opacity:0; transition:opacity .4s .35s; }
+  .bp-svg .reveal .cwire,.bp-svg .reveal .cunder{ stroke-dashoffset:0 !important; }
+  .bp-svg .reveal .cdot,.bp-svg .reveal .clbl{ opacity:1; }
   @media(max-width:720px){
     .bp-cartouche{ width:190px; bottom:60px; }
-    .bp-svg .num,.bp-svg .cote-txt{ display:none; }
+    .bp-svg .num,.bp-svg .cote-txt,.bp-svg .clbl{ display:none; }
   }
   `;
   var style = document.createElement("style");
@@ -336,6 +357,76 @@
     return e;
   }
   function pad2(n){ return (n < 10 ? "0" : "") + n; }
+
+  // rect (viewport) du premier mot trouvé dans un conteneur, sans toucher au DOM
+  function wordRect(root, word){
+    if (!root) return null;
+    var rx = new RegExp(word, "i");
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;
+    while ((n = w.nextNode())){
+      var m = rx.exec(n.nodeValue);
+      if (m){
+        var r = document.createRange();
+        r.setStart(n, m.index); r.setEnd(n, m.index + m[0].length);
+        var rc = r.getBoundingClientRect();
+        if (rc && rc.width) return rc;
+      }
+    }
+    return null;
+  }
+  function underline(rect){
+    var y  = rect.bottom + window.scrollY + 2;
+    var x1 = rect.left + window.scrollX, x2 = rect.right + window.scrollX;
+    var ln = svg("line", { "class":"cunder", x1:x1, y1:y, x2:x2, y2:y });
+    var L = x2 - x1; ln.style.strokeDasharray = L; ln.style.strokeDashoffset = L;
+    return ln;
+  }
+
+  // fils sémantiques : relie chaque terme de la phrase-thèse à son activité
+  function drawConcepts(){
+    if (conceptIO){ conceptIO.disconnect(); conceptIO = null; }
+    var about = document.querySelector("#about");
+    if (!about) return;
+    var g = svg("g", {}), any = false;
+    CONCEPTS.forEach(function(c){
+      var aRect = wordRect(document.querySelector(c.root), c.from);
+      var card  = document.querySelector('.activity-card[onclick*="' + c.card + '"]');
+      if (!aRect || !card) return;
+      var tRect = wordRect(card, c.word) || card.getBoundingClientRect();
+      var sx = aRect.left + window.scrollX + aRect.width / 2;
+      var sy = aRect.bottom + window.scrollY + 2;
+      var ex = tRect.left + window.scrollX + Math.min(tRect.width, 60) / 2;
+      var ey = tRect.top + window.scrollY - 4;
+      g.appendChild(underline(aRect));
+      g.appendChild(underline(tRect));
+      g.appendChild(svg("circle", { "class":"cdot", cx:sx, cy:sy, r:2.3 }));
+      g.appendChild(svg("circle", { "class":"cdot", cx:ex, cy:ey, r:2.3 }));
+      var dy = ey - sy;
+      g.appendChild(svg("path", { "class":"cwire",
+        d:"M " + sx + " " + sy +
+          " C " + sx + " " + (sy + dy*0.42) + ", " +
+                  ex + " " + (ey - dy*0.42) + ", " + ex + " " + ey }));
+      var lbl = svg("text", { "class":"clbl", x:(sx+ex)/2 + 8, y:(sy+ey)/2 });
+      lbl.textContent = c.label;
+      g.appendChild(lbl);
+      any = true;
+    });
+    if (!any) return;
+    els.svg.appendChild(g);
+    Array.prototype.forEach.call(g.querySelectorAll(".cwire"), function(p){
+      var L = p.getTotalLength();
+      p.style.strokeDasharray = L; p.style.strokeDashoffset = L;
+    });
+    about.__bpConcepts = g;
+    conceptIO = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting && e.target.__bpConcepts)
+          e.target.__bpConcepts.classList.add("reveal");
+      });
+    }, { rootMargin:"-15% 0px -15% 0px" });
+    conceptIO.observe(about);
+  }
+
   function docHeight(){
     var b = document.body, h = document.documentElement;
     return Math.max(b.scrollHeight, h.scrollHeight, b.offsetHeight, h.offsetHeight);
@@ -444,6 +535,7 @@
     cote.appendChild(ct);
     els.svg.appendChild(cote);
 
+    drawConcepts();
     onScroll();
   }
 
@@ -470,6 +562,7 @@
     window.removeEventListener("resize", onResize);
     window.removeEventListener("load", onResize);
     if (io){ io.disconnect(); io = null; }
+    if (conceptIO){ conceptIO.disconnect(); conceptIO = null; }
     [els.grid, els.cart, els.svg].forEach(function(e){ if (e) e.remove(); });
     (els.corners || []).forEach(function(c){ c.remove(); });
     els = {};
