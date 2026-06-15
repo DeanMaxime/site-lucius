@@ -13,8 +13,8 @@
   var THEMES = [
     { id: "nocturne",     label: "Nocturne",        note: "actuelle" },
     { id: "galerie",      label: "Galerie",         note: "clair éditorial" },
-    { id: "beton",        label: "Béton",           note: "brutaliste" },
-    { id: "foret-beton",  label: "Forêt + Béton",   note: "organique" }
+    { id: "beton",        label: "Béton",           note: "architecture" },
+    { id: "blueprint",    label: "Blueprint",       note: "plan technique" }
   ];
   var STORAGE_KEY = "lucius-da";
 
@@ -75,17 +75,19 @@
   html[data-theme="beton"] h1, html[data-theme="beton"] h1.hero-name,
   html[data-theme="beton"] .hero-name{ letter-spacing:-0.02em; text-transform:uppercase; }
 
-  /* ====================== FORÊT + BÉTON — organique =================== */
-  html[data-theme="foret-beton"]{
-    --black:#E6E3D9; --dark:#DCD8CC; --stone:#D0CCBE; --black-2:#EFEDE4;
-    --warm:#1E2A1C; --muted:#5E6B52; --gold:#7A8466; --gold-dim:#8E9580;
-    --green:#2C3A26; --green-l:#4E6044;
-    --line:#BFC0AE; --line-2:#A6A892; --surface:#DCD8CC; --surface-2:#D0CCBE;
-    --accent:#A85C3C; --accent-2:#6E8A5A;
-    --font-head:'Fraunces',serif; --font-body:'Space Grotesk',sans-serif;
+  /* ====================== BLUEPRINT — plan technique ================= */
+  /* Base béton clair ; la surcouche bleue (grille, rail, cotes, cartouche)
+     est gérée par le MODULE BLUEPRINT plus bas. */
+  html[data-theme="blueprint"]{
+    --black:#DEDED9; --dark:#D4D4CF; --stone:#CBCBC6; --black-2:#E7E7E3;
+    --warm:#17223A; --muted:#5A6478; --gold:#5E6C8C; --gold-dim:#7C849A;
+    --green:#2E3C56; --green-l:#4C5A78;
+    --line:#A9B0BE; --line-2:#909AAC; --surface:#D4D4CF; --surface-2:#CBCBC6;
+    --accent:#2F5DA8; --accent-2:#4A4A44;
+    --font-head:'Space Mono',monospace; --font-body:'Space Grotesk',sans-serif;
   }
-  html[data-theme="foret-beton"] h1, html[data-theme="foret-beton"] h1.hero-name,
-  html[data-theme="foret-beton"] .hero-name{ font-weight:500; letter-spacing:-0.01em; }
+  html[data-theme="blueprint"] h1, html[data-theme="blueprint"] h1.hero-name,
+  html[data-theme="blueprint"] .hero-name{ letter-spacing:-0.02em; text-transform:uppercase; }
 
   /* ====================== UI du sélecteur ============================= */
   .da-switch{ position:relative; display:inline-flex; align-items:center; }
@@ -240,4 +242,413 @@
   } else {
     mount();
   }
+})();
+
+
+/* =========================================================================
+   MODULE BLUEPRINT  —  surcouche pour la DA « Béton »
+   -------------------------------------------------------------------------
+   Active uniquement quand html[data-theme="beton"].
+   Ajoute : grille technique bleue, repères de coin, rail + connecteurs
+   orthogonaux ancrés sur les sections, cotes, numérotation, cartouche.
+   100 % autonome : ne touche pas au HTML des pages.
+   ========================================================================= */
+(function () {
+  "use strict";
+
+  var NS = "http://www.w3.org/2000/svg";
+  var RAIL = 34;          // x du rail vertical (gouttière gauche)
+  var on = false;
+  var els = {};           // éléments injectés
+  var io = null;          // IntersectionObserver
+  var rafPending = false;
+
+  /* ---- 1. CSS (scopée beton) ---------------------------------------- */
+  var CSS = `
+  html[data-theme="blueprint"]{
+    --bp:#2F5DA8; --bp-soft:rgba(47,93,168,.16); --bp-line:rgba(47,93,168,.55);
+    --bp-ink:#21477E;
+  }
+  /* grille technique : fin (28px) + fort (140px) */
+  .bp-grid{
+    position:fixed; inset:0; pointer-events:none; z-index:2; opacity:.9;
+    background-image:
+      linear-gradient(var(--bp-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bp-soft) 1px, transparent 1px),
+      linear-gradient(rgba(47,93,168,.30) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(47,93,168,.30) 1px, transparent 1px);
+    background-size:28px 28px, 28px 28px, 140px 140px, 140px 140px;
+    background-position:-1px -1px, -1px -1px, -1px -1px, -1px -1px;
+    mix-blend-mode:multiply;
+  }
+  .bp-svg{ position:absolute; top:0; left:0; width:100%; pointer-events:none;
+    z-index:3; overflow:visible; }
+  .bp-svg .rail{ fill:none; stroke:var(--bp-line); stroke-width:1.2; }
+  .bp-svg .conn{ fill:none; stroke:var(--bp-line); stroke-width:1.2;
+    transition:stroke-dashoffset .9s cubic-bezier(.2,.7,.2,1); }
+  .bp-svg .node{ fill:none; stroke:var(--bp); stroke-width:1.4;
+    opacity:0; transition:opacity .5s .15s; }
+  .bp-svg .node.dot{ fill:var(--bp); }
+  .bp-svg .num{ fill:var(--bp-ink); font-family:'Space Mono',monospace;
+    font-size:11px; letter-spacing:.06em; opacity:0; transition:opacity .5s .25s; }
+  .bp-svg .cote{ stroke:var(--bp-line); stroke-width:1; }
+  .bp-svg .cote-txt{ fill:var(--bp-ink); font-family:'Space Mono',monospace;
+    font-size:10px; letter-spacing:.08em; }
+  .bp-svg .reveal .conn{ stroke-dashoffset:0 !important; }
+  .bp-svg .reveal .node, .bp-svg .reveal .num{ opacity:1; }
+
+  /* repères de coin (crosshairs) */
+  .bp-corner{ position:fixed; width:22px; height:22px; z-index:6;
+    pointer-events:none; }
+  .bp-corner::before,.bp-corner::after{ content:''; position:absolute;
+    background:var(--bp-line); }
+  .bp-corner::before{ left:0; top:10px; width:22px; height:1px; }
+  .bp-corner::after{ left:10px; top:0; width:1px; height:22px; }
+  .bp-corner.tl{ top:14px; left:14px; } .bp-corner.tr{ top:14px; right:14px; }
+  .bp-corner.bl{ bottom:14px; left:14px; } .bp-corner.br{ bottom:14px; right:14px; }
+
+  /* cartouche (cartouche d'architecte, bas-droite) */
+  .bp-cartouche{ position:fixed; right:14px; bottom:44px; z-index:6;
+    pointer-events:none; border:1px solid var(--bp-line); background:rgba(231,231,225,.78);
+    backdrop-filter:blur(2px); font-family:'Space Mono',monospace; color:var(--bp-ink);
+    width:248px; }
+  .bp-cartouche div{ border-bottom:1px solid var(--bp-line); padding:5px 9px;
+    display:flex; justify-content:space-between; gap:10px; font-size:10px;
+    letter-spacing:.06em; }
+  .bp-cartouche div:last-child{ border-bottom:0; }
+  .bp-cartouche .k{ color:var(--bp); text-transform:uppercase; }
+  .bp-cartouche .big{ font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    justify-content:flex-start; color:var(--bp-ink); }
+  @media(max-width:720px){
+    .bp-cartouche{ width:190px; bottom:60px; }
+    .bp-svg .num,.bp-svg .cote-txt{ display:none; }
+  }
+  `;
+  var style = document.createElement("style");
+  style.id = "bp-style";
+  style.textContent = CSS;
+  document.head.appendChild(style);
+
+  /* ---- 2. helpers ---------------------------------------------------- */
+  function svg(tag, attrs){
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function docHeight(){
+    var b = document.body, h = document.documentElement;
+    return Math.max(b.scrollHeight, h.scrollHeight, b.offsetHeight, h.offsetHeight);
+  }
+
+  /* ---- 3. construction de la surcouche ------------------------------ */
+  function build(){
+    els.grid = document.createElement("div"); els.grid.className = "bp-grid";
+    document.body.appendChild(els.grid);
+
+    els.corners = [];
+    ["tl","tr","bl","br"].forEach(function(p){
+      var c = document.createElement("div"); c.className = "bp-corner " + p;
+      document.body.appendChild(c); els.corners.push(c);
+    });
+
+    var year = new Date().getFullYear();
+    var cart = document.createElement("div"); cart.className = "bp-cartouche";
+    cart.innerHTML =
+      '<div class="big">Lucius Arkmann</div>' +
+      '<div><span class="k">Projet</span><span>Site web</span></div>' +
+      '<div><span class="k">DA</span><span>Béton · Blueprint</span></div>' +
+      '<div><span class="k">Éch.</span><span>1:1</span></div>' +
+      '<div><span class="k">Feuille</span><span>01 / 01</span></div>' +
+      '<div><span class="k">Date</span><span>' + year + '</span></div>';
+    document.body.appendChild(cart); els.cart = cart;
+
+    els.svg = svg("svg", { "class":"bp-svg" });
+    document.body.appendChild(els.svg);
+
+    layout();
+    window.addEventListener("scroll", onScroll, { passive:true });
+    window.addEventListener("resize", onResize);
+    window.addEventListener("load", onResize);
+  }
+
+  /* ---- 4. (re)calcul géométrique + dessin --------------------------- */
+  function layout(){
+    if (!els.svg) return;
+    while (els.svg.firstChild) els.svg.removeChild(els.svg.firstChild);
+    if (io) io.disconnect();
+
+    var H = docHeight(), W = window.innerWidth;
+    els.svg.setAttribute("height", H);
+    els.svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    els.svg.style.height = H + "px";
+
+    // ancres = sections avec un id, point = bord gauche / centre du label
+    var sections = Array.prototype.slice.call(document.querySelectorAll("section[id]"));
+    var nodes = [];
+    sections.forEach(function(sec){
+      var label = sec.querySelector(".section-label, .section-title, h1, h2") || sec;
+      var r = label.getBoundingClientRect();
+      var x = Math.max(r.left + window.scrollX, RAIL + 26);
+      var y = r.top + window.scrollY + r.height / 2;
+      nodes.push({ x:x, y:y, id:sec.id, sec:sec });
+    });
+    if (nodes.length < 2) return; // dégradation : pages sans sections multiples
+
+    var top = nodes[0].y, bot = nodes[nodes.length - 1].y;
+
+    // rail vertical (dessiné au scroll)
+    var rail = svg("path", { "class":"rail",
+      d:"M " + RAIL + " " + top + " L " + RAIL + " " + bot });
+    els.svg.appendChild(rail); els.rail = rail;
+    var railLen = bot - top;
+    rail.style.strokeDasharray = railLen;
+    rail.style.strokeDashoffset = railLen;
+    els.railLen = railLen;
+
+    // connecteurs + nœuds + numéros
+    nodes.forEach(function(n, i){
+      var g = svg("g", {});
+      var connLen = (n.x - 16) - RAIL;
+      var conn = svg("path", { "class":"conn",
+        d:"M " + RAIL + " " + n.y + " L " + (n.x - 16) + " " + n.y });
+      conn.style.strokeDasharray = connLen;
+      conn.style.strokeDashoffset = connLen;
+      g.appendChild(conn);
+      g.appendChild(svg("circle", { "class":"node", cx:n.x - 12, cy:n.y, r:4 }));
+      g.appendChild(svg("circle", { "class":"node dot", cx:n.x - 12, cy:n.y, r:1.5 }));
+      var num = svg("text", { "class":"num", x:RAIL + 6, y:n.y - 8 });
+      num.textContent = pad2(i + 1) + " · " + n.id.toUpperCase();
+      g.appendChild(num);
+      els.svg.appendChild(g);
+      n.sec.__bpGroup = g;
+    });
+
+    io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting && en.target.__bpGroup)
+          en.target.__bpGroup.classList.add("reveal");
+      });
+    }, { rootMargin:"-12% 0px -12% 0px" });
+    nodes.forEach(function(n){ io.observe(n.sec); });
+
+    // cote verticale globale (marge droite)
+    var cx = W - 30, mid = (top + bot) / 2;
+    var cote = svg("g", {});
+    cote.appendChild(svg("line", { "class":"cote", x1:cx, y1:top, x2:cx, y2:bot }));
+    cote.appendChild(svg("line", { "class":"cote", x1:cx-5, y1:top, x2:cx+5, y2:top }));
+    cote.appendChild(svg("line", { "class":"cote", x1:cx-5, y1:bot, x2:cx+5, y2:bot }));
+    var ct = svg("text", { "class":"cote-txt", x:cx-8, y:mid,
+      transform:"rotate(-90 " + (cx-8) + " " + mid + ")", "text-anchor":"middle" });
+    ct.textContent = "H = " + Math.round(bot - top) + " px";
+    cote.appendChild(ct);
+    els.svg.appendChild(cote);
+
+    onScroll();
+  }
+
+  /* ---- 5. animation liée au scroll ---------------------------------- */
+  function onScroll(){
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function(){
+      rafPending = false;
+      if (!els.rail) return;
+      var max = docHeight() - window.innerHeight;
+      var p = max > 0 ? Math.min(1, window.scrollY / max) : 1;
+      els.rail.style.strokeDashoffset = els.railLen * (1 - p);
+    });
+  }
+  var resizeT;
+  function onResize(){ clearTimeout(resizeT); resizeT = setTimeout(layout, 180); }
+
+  /* ---- 6. activation / désactivation -------------------------------- */
+  function enable(){ if (!on){ on = true; build(); } }
+  function disable(){
+    if (!on) return; on = false;
+    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("resize", onResize);
+    window.removeEventListener("load", onResize);
+    if (io){ io.disconnect(); io = null; }
+    [els.grid, els.cart, els.svg].forEach(function(e){ if (e) e.remove(); });
+    (els.corners || []).forEach(function(c){ c.remove(); });
+    els = {};
+  }
+  function sync(){
+    (document.documentElement.getAttribute("data-theme") === "blueprint")
+      ? enable() : disable();
+  }
+
+  new MutationObserver(sync).observe(document.documentElement,
+    { attributes:true, attributeFilter:["data-theme"] });
+
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", sync);
+  else sync();
+})();
+
+
+/* =========================================================================
+   MODULE ARCHITECTURE  —  surcouche pour la DA « Béton »
+   -------------------------------------------------------------------------
+   Active uniquement quand html[data-theme="beton"].
+   Pas de quadrillage : révèle le maillage interne du site avec des lignes.
+   - cadres qui se délimitent (équerres) autour de chaque section ;
+   - leads horizontaux partant de chaque titre vers la marge droite ;
+   - chaîne verticale reliant les sections entre elles (maillage) ;
+   - numérotation discrète, tout se trace à l'entrée à l'écran.
+   100 % autonome : ne touche pas au HTML des pages.
+   ========================================================================= */
+(function () {
+  "use strict";
+
+  var NS = "http://www.w3.org/2000/svg";
+  var on = false, els = {}, io = null;
+  var INSET = 22;   // retrait du cadre par rapport au bord de section
+  var BR = 30;      // longueur des bras d'équerre
+  var GUT = 44;     // marge droite (x de la chaîne verticale)
+
+  var CSS = `
+  html[data-theme="beton"]{
+    --ar:rgba(21,21,15,.50); --ar-soft:rgba(21,21,15,.26); --ar-accent:#B5452F;
+  }
+  .ar-svg{ position:absolute; top:0; left:0; width:100%; pointer-events:none;
+    z-index:3; overflow:visible; }
+  .ar-svg path,.ar-svg line{ fill:none; }
+  .ar-svg .frame{ stroke:var(--ar-soft); stroke-width:1.1;
+    transition:stroke-dashoffset 1.1s cubic-bezier(.2,.7,.2,1); }
+  .ar-svg .lead{ stroke:var(--ar); stroke-width:1.1;
+    transition:stroke-dashoffset .9s cubic-bezier(.2,.7,.2,1); }
+  .ar-svg .chain{ stroke:var(--ar); stroke-width:1.1;
+    transition:stroke-dashoffset .9s .1s cubic-bezier(.2,.7,.2,1); }
+  .ar-svg .nbox{ fill:none; stroke:var(--ar-accent); stroke-width:1.4;
+    opacity:0; transition:opacity .5s .2s; }
+  .ar-svg .nbox.fill{ fill:var(--ar-accent); }
+  .ar-svg .num{ fill:var(--ar-accent); font-family:'Space Mono',monospace;
+    font-size:11px; letter-spacing:.08em; opacity:0; transition:opacity .5s .3s; }
+  .ar-svg .reveal .frame,.ar-svg .reveal .lead,.ar-svg .reveal .chain{
+    stroke-dashoffset:0 !important; }
+  .ar-svg .reveal .nbox,.ar-svg .reveal .num{ opacity:1; }
+  @media(max-width:720px){ .ar-svg .num{ display:none; } }
+  `;
+  var style = document.createElement("style");
+  style.id = "ar-style"; style.textContent = CSS;
+  document.head.appendChild(style);
+
+  function svg(tag, a){ var e = document.createElementNS(NS, tag);
+    for (var k in a) e.setAttribute(k, a[k]); return e; }
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function docHeight(){ var b=document.body,h=document.documentElement;
+    return Math.max(b.scrollHeight,h.scrollHeight,b.offsetHeight,h.offsetHeight); }
+
+  // équerre : path de longueur 2*BR partant des deux bras vers le coin
+  function corner(cx, cy, dx, dy){
+    return svg("path", { "class":"frame",
+      d:"M " + (cx+dx*BR) + " " + cy + " L " + cx + " " + cy +
+        " L " + cx + " " + (cy+dy*BR) });
+  }
+  function dash(el){ var L = el.getTotalLength();
+    el.style.strokeDasharray = L; el.style.strokeDashoffset = L; }
+
+  function build(){
+    els.svg = svg("svg", { "class":"ar-svg" });
+    document.body.appendChild(els.svg);
+    layout();
+    window.addEventListener("resize", onResize);
+    window.addEventListener("load", onResize);
+  }
+
+  function layout(){
+    if (!els.svg) return;
+    while (els.svg.firstChild) els.svg.removeChild(els.svg.firstChild);
+    if (io) io.disconnect();
+
+    var H = docHeight(), W = window.innerWidth;
+    els.svg.setAttribute("height", H);
+    els.svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    els.svg.style.height = H + "px";
+
+    var sections = Array.prototype.slice.call(document.querySelectorAll("section[id]"));
+    if (sections.length < 1) return;
+    var rightX = W - GUT;
+
+    // 1er passage : points de nœud (centre vertical du titre de chaque section)
+    var data = sections.map(function(sec){
+      var t = sec.querySelector(".section-title, h1, h2, .section-label") || sec;
+      var tr = t.getBoundingClientRect();
+      return {
+        sec: sec, id: sec.id,
+        nodeY: tr.top + window.scrollY + tr.height/2,
+        leadStart: Math.min(tr.right + window.scrollX + 14, rightX - 40),
+        rect: sec.getBoundingClientRect()
+      };
+    });
+
+    io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting && en.target.__arGroup)
+          en.target.__arGroup.classList.add("reveal");
+      });
+    }, { rootMargin:"-10% 0px -10% 0px" });
+
+    data.forEach(function(d, i){
+      var g = svg("g", {});
+      var r = d.rect;
+      var x0 = r.left + window.scrollX + INSET,
+          y0 = r.top  + window.scrollY + INSET,
+          x1 = r.right + window.scrollX - INSET,
+          y1 = r.bottom + window.scrollY - INSET;
+      // cadre : 4 équerres
+      [corner(x0,y0,1,1), corner(x1,y0,-1,1),
+       corner(x0,y1,1,-1), corner(x1,y1,-1,-1)].forEach(function(c){
+        g.appendChild(c);
+      });
+      // lead horizontal du titre vers la marge droite
+      var lead = svg("line", { "class":"lead",
+        x1:d.leadStart, y1:d.nodeY, x2:rightX, y2:d.nodeY });
+      g.appendChild(lead);
+      // chaîne verticale reliant à la section précédente
+      if (i > 0){
+        var chain = svg("line", { "class":"chain",
+          x1:rightX, y1:data[i-1].nodeY, x2:rightX, y2:d.nodeY });
+        g.appendChild(chain);
+      }
+      // nœud (carré) + point + numéro
+      g.appendChild(svg("rect", { "class":"nbox", x:rightX-4, y:d.nodeY-4, width:8, height:8 }));
+      g.appendChild(svg("rect", { "class":"nbox fill", x:rightX-1.5, y:d.nodeY-1.5, width:3, height:3 }));
+      var num = svg("text", { "class":"num", x:rightX-12, y:d.nodeY-9, "text-anchor":"end" });
+      num.textContent = pad2(i+1) + " · " + d.id.toUpperCase();
+      g.appendChild(num);
+
+      els.svg.appendChild(g);
+      // init dash (après insertion dans le DOM, pour getTotalLength)
+      Array.prototype.forEach.call(g.querySelectorAll(".frame, .lead, .chain"), dash);
+      d.sec.__arGroup = g;
+      io.observe(d.sec);
+    });
+  }
+
+  var rt;
+  function onResize(){ clearTimeout(rt); rt = setTimeout(layout, 180); }
+
+  function enable(){ if (!on){ on = true; build(); } }
+  function disable(){
+    if (!on) return; on = false;
+    window.removeEventListener("resize", onResize);
+    window.removeEventListener("load", onResize);
+    if (io){ io.disconnect(); io = null; }
+    if (els.svg) els.svg.remove();
+    els = {};
+  }
+  function sync(){
+    (document.documentElement.getAttribute("data-theme") === "beton")
+      ? enable() : disable();
+  }
+
+  new MutationObserver(sync).observe(document.documentElement,
+    { attributes:true, attributeFilter:["data-theme"] });
+
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", sync);
+  else sync();
 })();
