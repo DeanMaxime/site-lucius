@@ -535,7 +535,6 @@
     cote.appendChild(ct);
     els.svg.appendChild(cote);
 
-    drawConcepts();
     onScroll();
   }
 
@@ -596,7 +595,7 @@
   "use strict";
 
   var NS = "http://www.w3.org/2000/svg";
-  var on = false, els = {}, io = null;
+  var on = false, els = {}, io = null, conceptIO = null;
   var INSET = 22;   // retrait du cadre par rapport au bord de section
   var BR = 30;      // longueur des bras d'équerre
   var GUT = 44;     // marge droite (x de la chaîne verticale)
@@ -622,7 +621,17 @@
   .ar-svg .reveal .frame,.ar-svg .reveal .lead,.ar-svg .reveal .chain{
     stroke-dashoffset:0 !important; }
   .ar-svg .reveal .nbox,.ar-svg .reveal .num{ opacity:1; }
-  @media(max-width:720px){ .ar-svg .num{ display:none; } }
+  /* fils sémantiques : termes du texte reliés aux activités (lignes droites) */
+  .ar-svg .cwire{ stroke:var(--ar-accent); stroke-width:1.3;
+    transition:stroke-dashoffset 1.1s cubic-bezier(.2,.7,.2,1); }
+  .ar-svg .cunder{ stroke:var(--ar-accent); stroke-width:1.6;
+    transition:stroke-dashoffset .7s cubic-bezier(.2,.7,.2,1); }
+  .ar-svg .cdot{ fill:var(--ar-accent); opacity:0; transition:opacity .4s .2s; }
+  .ar-svg .clbl{ fill:var(--ar-accent); font-family:'Space Mono',monospace;
+    font-size:9.5px; letter-spacing:.1em; opacity:0; transition:opacity .4s .35s; }
+  .ar-svg .reveal .cwire,.ar-svg .reveal .cunder{ stroke-dashoffset:0 !important; }
+  .ar-svg .reveal .cdot,.ar-svg .reveal .clbl{ opacity:1; }
+  @media(max-width:720px){ .ar-svg .num,.ar-svg .clbl{ display:none; } }
   `;
   var style = document.createElement("style");
   style.id = "ar-style"; style.textContent = CSS;
@@ -642,6 +651,76 @@
   }
   function dash(el){ var L = el.getTotalLength();
     el.style.strokeDasharray = L; el.style.strokeDashoffset = L; }
+
+  /* ---- fils sémantiques : terme du texte -> carte d'activité --------- */
+  var CONCEPTS = [
+    { from:"compositeur", root:"#about", card:"activite_composition.html",
+      word:"Composition",  label:"COMPOSITION" },
+    { from:"concertiste", root:"#about", card:"activite_interpretation.html",
+      word:"Concertiste",  label:"INTERPRÉTATION" },
+    { from:"guitariste",  root:"#about", card:"activite_enseignement.html",
+      word:"guitare",      label:"GUITARE" }
+  ];
+  function wordRect(root, word){
+    if (!root) return null;
+    var rx = new RegExp(word, "i");
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;
+    while ((n = w.nextNode())){
+      var m = rx.exec(n.nodeValue);
+      if (m){
+        var r = document.createRange();
+        r.setStart(n, m.index); r.setEnd(n, m.index + m[0].length);
+        var rc = r.getBoundingClientRect();
+        if (rc && rc.width) return rc;
+      }
+    }
+    return null;
+  }
+  function underline(rect){
+    var y  = rect.bottom + window.scrollY + 2;
+    var x1 = rect.left + window.scrollX, x2 = rect.right + window.scrollX;
+    var ln = svg("line", { "class":"cunder", x1:x1, y1:y, x2:x2, y2:y });
+    var L = x2 - x1; ln.style.strokeDasharray = L; ln.style.strokeDashoffset = L;
+    return ln;
+  }
+  function drawConcepts(){
+    if (conceptIO){ conceptIO.disconnect(); conceptIO = null; }
+    var about = document.querySelector("#about");
+    if (!about) return;
+    var g = svg("g", {}), any = false;
+    CONCEPTS.forEach(function(c){
+      var aRect = wordRect(document.querySelector(c.root), c.from);
+      var card  = document.querySelector('.activity-card[onclick*="' + c.card + '"]');
+      if (!aRect || !card) return;
+      var tRect = wordRect(card, c.word) || card.getBoundingClientRect();
+      var sx = aRect.left + window.scrollX + aRect.width / 2;
+      var sy = aRect.bottom + window.scrollY + 2;
+      var ex = tRect.left + window.scrollX + Math.min(tRect.width, 60) / 2;
+      var ey = tRect.top + window.scrollY - 4;
+      g.appendChild(underline(aRect));
+      g.appendChild(underline(tRect));
+      g.appendChild(svg("circle", { "class":"cdot", cx:sx, cy:sy, r:2.3 }));
+      g.appendChild(svg("circle", { "class":"cdot", cx:ex, cy:ey, r:2.3 }));
+      var ln = svg("line", { "class":"cwire", x1:sx, y1:sy, x2:ex, y2:ey });
+      var L = Math.round(Math.sqrt((ex-sx)*(ex-sx) + (ey-sy)*(ey-sy)));
+      ln.style.strokeDasharray = L; ln.style.strokeDashoffset = L;
+      g.appendChild(ln);
+      var lbl = svg("text", { "class":"clbl", x:(sx+ex)/2 + 8, y:(sy+ey)/2 });
+      lbl.textContent = c.label;
+      g.appendChild(lbl);
+      any = true;
+    });
+    if (!any) return;
+    els.svg.appendChild(g);
+    about.__arConcepts = g;
+    conceptIO = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting && e.target.__arConcepts)
+          e.target.__arConcepts.classList.add("reveal");
+      });
+    }, { rootMargin:"-15% 0px -15% 0px" });
+    conceptIO.observe(about);
+  }
 
   function build(){
     els.svg = svg("svg", { "class":"ar-svg" });
@@ -719,6 +798,8 @@
       d.sec.__arGroup = g;
       io.observe(d.sec);
     });
+
+    drawConcepts();
   }
 
   var rt;
@@ -730,6 +811,7 @@
     window.removeEventListener("resize", onResize);
     window.removeEventListener("load", onResize);
     if (io){ io.disconnect(); io = null; }
+    if (conceptIO){ conceptIO.disconnect(); conceptIO = null; }
     if (els.svg) els.svg.remove();
     els = {};
   }
