@@ -268,8 +268,8 @@
   var CONCEPTS = [
     { from:"compositeur", root:"#about", card:"activite_composition.html",
       word:"Composition",  label:"COMPOSITION" },
-    { from:"concertiste", root:"#about", card:"activite_interpretation.html",
-      word:"Concertiste",  label:"INTERPRÉTATION" },
+    { from:"concertiste", root:"#about", card:"activite_concertiste.html",
+      word:"Concertiste",  label:"CONCERTISTE" },
     { from:"guitariste",  root:"#about", card:"activite_enseignement.html",
       word:"guitare",      label:"GUITARE" }
   ];
@@ -656,8 +656,8 @@
   var CONCEPTS = [
     { from:"compositeur", root:"#about", card:"activite_composition.html",
       word:"Composition",  label:"COMPOSITION" },
-    { from:"concertiste", root:"#about", card:"activite_interpretation.html",
-      word:"Concertiste",  label:"INTERPRÉTATION" },
+    { from:"concertiste", root:"#about", card:"activite_concertiste.html",
+      word:"Concertiste",  label:"CONCERTISTE" },
     { from:"guitariste",  root:"#about", card:"activite_enseignement.html",
       word:"guitare",      label:"GUITARE" }
   ];

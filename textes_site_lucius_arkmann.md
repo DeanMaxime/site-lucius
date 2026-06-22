@@ -70,7 +70,7 @@ J'écris pour ensembles de chambre, solistes, dispositifs électroniques et conf
 
 ---
 
-## PAGE — INTERPRÈTE & SOLISTE (`activite_interpretation.html`)
+## PAGE — INTERPRÈTE & SOLISTE (`activite_concertiste.html`)
 
 **Eyebrow :** Activité
 **Titre :** Interprète & Soliste
