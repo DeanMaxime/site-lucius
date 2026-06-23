@@ -23,7 +23,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 h1{font-family:'Barlow',sans-serif;font-weight:400;font-size:clamp(42px,6vw,80px);line-height:1;letter-spacing:-.02em;color:var(--warm);margin-bottom:20px}
 .hero-sub{font-size:31px;color:var(--warm);letter-spacing:.04em;line-height:1.3}
 .content{max-width:700px;padding:72px 48px;margin:0 auto}
-.content p{font-size:33px;line-height:1.8;color:var(--warm);margin-bottom:24px}
+.content p{font-size:33px;line-height:1.8;color:var(--warm);margin-bottom:24px;text-align:justify;-webkit-hyphens:auto;hyphens:auto}
 .content p strong{color:var(--warm);font-weight:500}
 .content p em{color:var(--warm)}
 .tags{display:flex;flex-wrap:wrap;gap:10px;margin:40px 0 0}
@@ -63,13 +63,17 @@ h1{font-family:'Barlow',sans-serif;font-weight:400;font-size:clamp(42px,6vw,80px
 
   .concert-figure{
     float:right;
-    width:340px;
-    margin:6px calc(-1 * min(280px,(100vw - 700px)/2)) 30px 48px;
+    width:min(510px,42vw);
+    margin:8px calc(-1 * min(440px,(100vw - 700px)/2)) 30px 56px;
     border:1px solid var(--stone);
     overflow:hidden;
-    shape-margin:24px;
+    shape-margin:28px;
   }
   .concert-figure img{display:block;width:100%;height:auto}
+  @media(min-width:769px){
+    .content{max-width:720px;margin-left:max(40px,calc((100vw - 720px)/2 - 150px));margin-right:auto}
+    .content p{font-size:23px;line-height:1.65;text-align:justify}
+  }
   @media(max-width:768px){
     .concert-figure{float:none;width:100%;margin:36px 0}
   }
